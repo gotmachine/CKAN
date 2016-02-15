@@ -2,12 +2,15 @@ language: csharp
 
 sudo: required
 
+env:
+    - BUILD_CONFIGURATION=Debug
+    # Disabled until projects build to the correct output directories
+    # - BUILD_CONFIGURATION=Release
+
 mono:
     - latest
     - 4.2.4
     - 4.0.5
-    - 3.12.0
-    - 3.10.0
 
 addons:
     apt:
@@ -25,12 +28,9 @@ before_install:
     - "export DISPLAY=:99.0"
     - sh -e /etc/init.d/xvfb start
 
-install:
-    - nuget restore CKAN.sln
-
 script:
-    - bin/build
-    - nunit-console --exclude=FlakyNetwork build/Tests/bin/Debug/CKAN.Tests.dll
+    - ./build --configuration=$BUILD_CONFIGURATION
+    - nunit-console --exclude=FlakyNetwork ./Tests/bin/$BUILD_CONFIGURATION/CKAN.Tests.dll
     - prove  # Run all the tests in t/
 
 before_deploy:
@@ -49,7 +49,8 @@ deploy:
       on:
         repo: KSP-CKAN/CKAN
         tags: true
-        condition: $(mono --version | perl -ne'/version (\S+)/ and print $1') = 3.10.0
+        # Configuration has to be Debug until projects build to correct output directories
+        condition: $BUILD_CONFIGURATION = Debug && $(mono --version | perl -ne'/version (\S+)/ and print $1') = 4.6.2
         # all_branches needed as a workaround for travis-ci#1675
         all_branches: true
 
@@ -66,8 +67,9 @@ deploy:
       on:
         repo: KSP-CKAN/CKAN
         branch: master
-        condition: $(mono --version | perl -ne'/version (\S+)/ and print $1') = 3.10.0
-        
+        # Configuration has to be Debug until projects build to correct output directories
+        condition: $BUILD_CONFIGURATION = Release && $(mono --version | perl -ne'/version (\S+)/ and print $1') = 4.6.2
+
 notifications:
   irc:
     channels:
